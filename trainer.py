@@ -5,6 +5,7 @@ import numpy as np
 from tqdm import tqdm
 
 import argparse
+import os
 from model import CNN
 
 from sobamchan.sobamchan_iterator import Iterator
@@ -91,6 +92,9 @@ def train(model):
 
 
     output_path = './results/{}'.format(output_dirname)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
     train_loss_log.save('{}/train_loss_log'.format(output_path))
     test_loss_log.save('{}/test_loss_log'.format(output_path))
     test_acc_log.save('{}/test_acc_log'.format(output_path))
