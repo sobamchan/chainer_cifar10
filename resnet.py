@@ -42,7 +42,7 @@ class ResNet(sobamchan_chainer.Model):
         n = 2
         modules = []
         self.pooling_layer = []        
-        input_channel = 1
+        input_channel = 3
         # 16 layer, 32 * 32 output map size
         initial_layer_i = layer_i
         for i in range(layer_i, layer_i+n*2+1):

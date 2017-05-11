@@ -2,6 +2,7 @@ import chainer
 from chainer import datasets
 from chainer import optimizers
 import numpy as np
+from tqdm import tqdm
 
 import argparse
 from model import CNN
@@ -45,7 +46,7 @@ def train(model):
     test_loss_log = Log()
     test_acc_log = Log()
 
-    for _ in range(epoch):
+    for _ in tqdm(range(epoch)):
 
         order = np.random.permutation(train_n)
         train_x_iter = Iterator(train_x, bs, order, shuffle=False)
