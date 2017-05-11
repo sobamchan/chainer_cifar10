@@ -1,9 +1,9 @@
 from trainer import train
-from model import CNN
+from model import CNN, ResCNN, ResNCNN, ExpoCNN
 from resnet import ResNet
 
 def main():
-    train(ResNet)
+    train(CNN)
 
 if __name__ == '__main__':
     main()
