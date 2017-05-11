@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument('--batch-size', dest='bs', default=128, type=int)
     parser.add_argument('--epoch', dest='epoch', default=1, type=int)
     parser.add_argument('--gpu', dest='gpu', default=-1, type=int)
+    parser.add_argument('--output-dirname', dest='output_dirname', required=True)
 
     return parser.parse_args()
 
@@ -27,6 +28,7 @@ def train(model):
     bs = args.bs
     epoch = args.epoch
     gpu = args.gpu
+    output_dirname = args.output_dirname
 
     optimizer = optimizers.AdaGrad()
     model = model()
@@ -88,9 +90,10 @@ def train(model):
         print('test acc: {}'.format(acc_mean))
 
 
-    train_loss_log.save('./results/train_loss_log')
-    test_loss_log.save('./results/test_loss_log')
-    test_acc_log.save('./results/test_acc_log')
+    output_path = './results/{}'.format(output_dirname)
+    train_loss_log.save('{}/train_loss_log'.format(output_path))
+    test_loss_log.save('{}/test_loss_log'.format(output_path))
+    test_acc_log.save('{}/test_acc_log'.format(output_path))
 
 if __name__ == '__main__':
     train()
