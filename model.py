@@ -40,8 +40,8 @@ class ExpoCNN(Model):
     def fwd(self, x, train):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
+        x = x**2
         x = self.fc(x)
-        x = x.data**2
         return x
 
 
