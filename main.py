@@ -3,7 +3,7 @@ from model import CNN, ResCNN, ResNCNN, ExpoCNN, SigCNN
 from resnet import ResNet
 
 def main():
-    train(SigCNN)
+    train(ResNCNN)
 
 if __name__ == '__main__':
     main()

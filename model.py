@@ -110,7 +110,7 @@ class ResNCNN(Model):
         return F.softmax_cross_entropy(x, t), F.accuracy(x, t)
 
     def fwd(self, x, train):
-        n = 2
+        n = 3
         _, _, x_h, x_w = x.shape
         h = F.relu(self.conv1(x))
         h = F.relu(self.conv2(h))
