@@ -69,6 +69,7 @@ def train(model):
         loss_mean = float(loss_sum/train_n)
         train_loss_log.add(loss_mean)
         print('train loss: {}'.format(loss_mean)) 
+        print(model.alpha.W.data)
 
         order = np.random.permutation(test_n)
         test_x_iter = Iterator(test_x, bs, order)
