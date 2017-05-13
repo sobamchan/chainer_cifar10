@@ -1,9 +1,9 @@
 from trainer import train
-from model import CNN, ResCNN, ResNCNN, ExpoCNN, SigCNN
+from model import CNN, ResCNN, ResNCNN, ExpoCNN, SigCNN, AutoResNCNN
 from resnet import ResNet
 
 def main():
-    train(ResNCNN)
+    train(AutoResNCNN)
 
 if __name__ == '__main__':
     main()

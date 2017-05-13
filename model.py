@@ -2,6 +2,7 @@ import numpy as np
 import chainer.links as L
 import chainer.functions as F
 from chainer import Variable
+import chainer
 
 from sobamchan.sobamchan_chainer import Model
 
@@ -127,4 +128,65 @@ class ResNCNN(Model):
         for _ in range(n):
             h += x
         h = self.fc(h)
+        return h
+
+class AlphaLayer(chainer.Link):
+
+    def __init__(self, alpha_initial):
+        # Parameters are initialized as a numpy array of given shape.
+        super(AlphaLayer, self).__init__(
+            W=(1,),
+            b=(1,),
+        )
+        self.W.data[...] = alpha_initial
+        self.b.data.fill(0)
+
+    def __call__(self, x):
+        # self.W.grad = np.array([2]).astype(np.float32)
+        return F.matmul(x, self.W)
+
+class AutoResNCNN(Model):
+    '''
+    batch size has to be 1
+    '''
+
+    def __init__(self):
+        super(AutoResNCNN, self).__init__(
+            conv1=L.Convolution2D(3, 1, ksize=4, stride=1),
+            conv2=L.Convolution2D(1, 3, ksize=4, stride=1),
+            alpha=AlphaLayer(2),
+            fc=L.Linear(None, 10)
+        )
+
+    def __call__(self, x, t, train=True):
+        x = self.fwd(x, train)
+        return F.softmax_cross_entropy(x, t), F.accuracy(x, t)
+
+    def fwd(self, x, train):
+        n = 3
+        _, _, x_h, x_w = x.shape
+        h = F.relu(self.conv1(x))
+        h = F.relu(self.conv2(h))
+        h_b, h_c, h_h, h_w = h.shape
+        if x_h != h_h and x_w != h_w:
+            pad = Variable(np.zeros((h_b, h_c, x_h-h_h, h_w)).astype(np.float32), volatile=x.volatile)
+            if np.ndarray is not type(h.data):
+                pad.to_gpu()
+            h = F.concat((h, pad), axis=2)
+            pad = Variable(np.zeros((h_b, h_c, x_h, x_w-h_w)).astype(np.float32), volatile=x.volatile)
+            if np.ndarray is not type(h.data):
+                pad.to_gpu()
+            h = F.concat((h, pad), axis=3)
+
+        h_b, h_c, h_h, h_w = h.shape
+        h_flat = F.flatten(h)
+        x_flat = F.flatten(x)
+        x = self.alpha(x_flat)
+        h_flat += x_flat
+        h = F.reshape(h_flat, h.shape)
+        x = F.reshape(x_flat, h.shape)
+        h = self.fc(h)
+        # print(self.alpha.W.data)
+        # print(self.alpha.W.grad)
+        print(self.alpha.W.debug_print())
         return h
