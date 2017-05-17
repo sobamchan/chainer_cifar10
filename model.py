@@ -5,6 +5,7 @@ from chainer import Variable
 import chainer
 
 from sobamchan.sobamchan_chainer import Model
+from sobamchan.sobamchan_log import Log
 
 class CNN(Model):
 
@@ -159,6 +160,7 @@ class AutoResNCNN(Model):
             alpha=AlphaLayer(3072, 3072, 2),
             fc=L.Linear(None, 10)
         )
+        self.alpha_log = Log()
 
     def __call__(self, x, t, train=True):
         x = self.fwd(x, train)
@@ -188,4 +190,6 @@ class AutoResNCNN(Model):
         h = F.reshape(h_flat, h.shape)
         x = F.reshape(x_flat, h.shape)
         h = self.fc(h)
+        self.alpha_log.add(self.alpha.W)
+        self.alpha_log.save('./results/alpha_log')
         return h
