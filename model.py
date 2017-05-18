@@ -190,6 +190,6 @@ class AutoResNCNN(Model):
         h = F.reshape(h_flat, h.shape)
         x = F.reshape(x_flat, h.shape)
         h = self.fc(h)
-        self.alpha_log.add(self.alpha.W.data[0][0])
+        self.alpha_log.add(float(self.alpha.W.data[0][0]))
         self.alpha_log.save('./results/alpha_log')
         return h
