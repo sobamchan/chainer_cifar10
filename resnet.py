@@ -25,55 +25,42 @@ class ResBlock(sobamchan_chainer.Model):
         h = self.bn2((self.conv2(h)))
         _, x_channels, x_h, x_w = x.shape
         h_batch_size, h_channels, h_h, h_w = h.shape
+        if x_h != h_h:
+            x = F.max_pooling_2d(x, ksize=2, stride=2)
         if x_channels != h_channels:
             pad = Variable(np.zeros((h_batch_size, h_channels - x_channels, h_h, h_w)).astype(np.float32), volatile=x.volatile)
             if np.ndarray is not type(h.data):
                 pad.to_gpu()
             x = F.concat((x, pad))
-        if x_h != h_h:
-            x = F.max_pooling_2d(x, ksize=2, stride=2)
-        return h + x
+        return F.relu(h + x)
 
 class ResNet(sobamchan_chainer.Model):
 
-    def __init__(self):
+    def __init__(self, in_channels=3):
         super(ResNet, self).__init__()
-        layer_i = 1
-        n = 2
+        n = 3
         modules = []
-        self.pooling_layer = []        
-        input_channel = 3
-        # 16 layer, 32 * 32 output map size
-        initial_layer_i = layer_i
-        for i in range(layer_i, layer_i+n*2+1):
-            modules += [('resblock_{}'.format(layer_i), ResBlock(input_channel, 16, stride=1))]
-            input_channel = 16
-            layer_i += 1
-        # 32 layer, 16 output map size
-        initial_layer_i = layer_i
-        for j, i in enumerate(range(layer_i, layer_i+n*2)):
-            if i == initial_layer_i+n*2-1:
-                modules += [('resblock_{}'.format(layer_i), ResBlock(input_channel, 32, stride=2))]
-            else:
-                modules += [('resblock_{}'.format(layer_i), ResBlock(input_channel, 32, stride=1))]
-            input_channel = 32
-            layer_i += 1                
-        # 64 layer, 8 output map size
-        initial_layer_i = layer_i
-        for j, i in enumerate(range(layer_i, layer_i+n*2)):
-            if i == initial_layer_i+n*2-1:
-                modules += [('resblock_{}'.format(layer_i), ResBlock(input_channel, 64, stride=2))]                
-            else:
-                modules += [('resblock_{}'.format(layer_i), ResBlock(input_channel, 64, stride=1))]
-            input_channel = 64
-            layer_i += 1
 
+        # first
+        modules += [('conv', L.Convolution2D(in_channels, 16, (3,3)))]
+        modules += [('bn', L.BatchNormalization(16))]
+        # 16
+        for i in range(5):
+            modules += [('resblock_16_{}'.format(i), ResBlock(16, 16))]
+        modules += [('resblock_16_{}'.format(5), ResBlock(16, 32, 2))]
+        # 32
+        for i in range(5):
+            modules += [('resblock_32_{}'.format(i), ResBlock(32, 32))]
+        modules += [('resblock_32_{}'.format(5), ResBlock(32, 64, 2))]
+        # 64
+        for i in range(6):
+            modules += [('resblock_64_{}'.format(i), ResBlock(64, 64))]
+        # last
         modules += [('fc', L.Linear(None, 10))]
         
         # register
         [ self.add_link(*link) for link in modules ]
         self.modules = modules
-        self.layer_n = layer_i
 
     def __call__(self, x, t, train=True):
         y = self.fwd(x)
@@ -81,12 +68,23 @@ class ResNet(sobamchan_chainer.Model):
 
     def fwd(self, x):
         # convs and bns
-        for i in range(1, self.layer_n):
-            x = self['resblock_{}'.format(i)](x)
-            if i ==1 :
-                x = F.max_pooling_2d(x, (2,2), stride=1)
-
-        x = F.average_pooling_2d(x, (2,2), stride=1)
+        # first
+        h = self['conv'](x)
+        h = self['bn'](h)
+        # 16
+        for i in range(5):
+            h = self['resblock_16_{}'.format(i)](h)
+        h = self['resblock_16_{}'.format(5)](h)
+        # 32 
+        for i in range(5):
+            h = self['resblock_32_{}'.format(i)](h)
+        h = self['resblock_32_{}'.format(5)](h)
+        # 64
+        for i in range(5):
+            h = self['resblock_64_{}'.format(i)](h)
+        h = self['resblock_64_{}'.format(5)](h)
+        h = F.average_pooling_2d(h, (2,2), stride=1)
         # fc
-        x = self['fc'](x)
-        return x
+        h = self['fc'](h)
+        print('done')
+        return h
