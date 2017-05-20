@@ -145,6 +145,8 @@ class AlphaLayer(chainer.Link):
 
     def __call__(self, x):
         # self.W.grad = np.array([2]).astype(np.float32)
+        if np.ndarray is not type(x):
+            self.W.to_gpu
         return F.matmul(x, self.W)
 
 class AutoResNCNN(Model):
